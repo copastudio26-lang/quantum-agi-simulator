@@ -68,7 +68,7 @@ def generate_ai_insights(user_complex_question, quantum_state_summary):
         )
         
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-1.5-flash',
             contents=prompt,
         )
         return response.text
