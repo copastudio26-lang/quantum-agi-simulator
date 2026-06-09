@@ -4,3 +4,4 @@ flask-talisman
 numpy
 matplotlib
 gunicorn
+google-genai

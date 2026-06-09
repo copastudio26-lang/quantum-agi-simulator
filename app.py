@@ -51,12 +51,30 @@ def process_complex_data(data_string):
     
     return highest_prob_state, plot_url
 
+from google import genai
+import os
+
+# Gemini क्लाइंट इनिशियलाइज़ करें (यह पर्यावरण से API की उठाएगा)
+client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+
 def generate_ai_insights(user_complex_question, quantum_state_summary):
-    templates = [
-        f"🎯 [QUANTUM GENERATIVE SOLUTION]: आपके सवाल '{user_complex_question}' का विश्लेषण क्वांटम सुपरपोजीशन में किया गया। पुराने वैश्विक डेटा के आधार पर एक नया पैटर्न मिला है: हमें {quantum_state_summary} के माध्यम से रिसोर्सेज को ऑप्टिमाइज़ करना होगा।",
-        f"🚀 [AGI BREAKTHROUGH]: वैश्विक डेटाबेस सिंक पूरा हुआ। '{user_complex_question}' का समाधान करने के लिए सिस्टम ने एक नया एल्गोरिदम जनरेट किया है।"
-    ]
-    return np.random.choice(templates)
+    try:
+        # यहाँ हम प्रॉम्ट को बहुत ही एडवांस बना रहे हैं
+        prompt = (
+            f"You are an Advanced AGI Core acting over a Quantum Simulator. "
+            f"The user asked this complex question: '{user_complex_question}'. "
+            f"The quantum engine processed this and collapsed into the dominant state: '{quantum_state_summary}'. "
+            f"Provide a highly sophisticated, technical, and brilliant response in Hindi, analyzing how the quantum state helps resolve their problem."
+        )
+        
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+        )
+        return response.text
+    except Exception as e:
+        return f"⚠️ [API Connection Error]: {str(e)}"
+
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
