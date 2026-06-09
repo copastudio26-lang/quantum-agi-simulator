@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MALHAR MOBILE SHOP AND ELECTRONIC</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+       (function(){
+          // ✅ Aapki Asli Public Key Yahan Set Ho Gayi Hai
+          emailjs.init("pnqliOgruA8M88-18"); 
+       })();
+    </script>
+</head>
+<body>
+
+    <div id="splash-screen">
+        <div class="splash-content">
+            <h1 class="logo-text">MALHAR<br><span class="sub-text">MOBILE & ELECTRONIC</span></h1>
+            <div class="loader">
+                <div class="load-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="auth-screen" class="hidden">
+        <div class="auth-container">
+            <div class="auth-header">
+                <h2 id="auth-title">WELCOME BACK</h2>
+                <div class="toggle-btns">
+                    <button id="btn-login-active" class="toggle active" onclick="switchAuthMode('login')">LOGIN</button>
+                    <button id="btn-signup" class="toggle" onclick="switchAuthMode('signup')">SIGN UP</button>
+                </div>
+            </div>
+
+            <form id="login-form" class="auth-form">
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="login-username" placeholder="Email / Username" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="login-password" placeholder="Password" required>
+                </div>
+                <button type="submit" class="btn-neon">LOGIN <i class="fas fa-sign-in-alt"></i></button>
+                <p class="switch-text">New here? <a href="#" onclick="switchAuthMode('signup')">Create Account</a></p>
+            </form>
+
+            <form id="signup-form" class="auth-form hidden">
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="reg-name" placeholder="Full Name" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+o
+                    <input type="email" id="reg-contact" placeholder="Enter Email Address" required>
+                </div>
+
+                <div class="otp-section" style="margin-bottom: 15px;">
+                    <button type="button" id="send-otp-btn" class="btn-neon" style="padding: 8px 15px; font-size: 0.8rem;" onclick="sendOTP()">SEND OTP <i class="fas fa-paper-plane"></i></button>
+                    <div id="otp-input-field" class="input-group hidden" style="margin-top: 15px;">
+                        <i class="fas fa-key"></i>
+                        <input type="text" id="reg-otp" placeholder="Enter 4-Digit OTP" required maxlength="4">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="reg-password" placeholder="Create Password" required>
+                </div>
+                <button type="submit" class="btn-neon">REGISTER <i class="fas fa-user-plus"></i></button>
+                <p class="switch-text">Already have an account? <a href="#" onclick="switchAuthMode('login')">Login here</a></p>
+            </form>
+        </div>
+    </div>
+
+    <div id="dashboard-screen" class="hidden">
+        <div class="mobile-menu-toggle" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </div>
+
+        <div class="dashboard-layout">
+            <nav id="sidebar">
+                <div class="brand">
+                    <h3>MALHAR<span class="gold">.MOB</span></h3>
+                </div>
+                <ul class="nav-links">
+                    <li onclick="loadSection('home')" class="active-nav"><i class="fas fa-home"></i> Home</li>
+                    <li onclick="loadSection('mobiles')"><i class="fas fa-mobile-alt"></i> Order Mobiles</li>
+                    <li onclick="loadSection('profile')"><i class="fas fa-user"></i> My Profile</li>
+                    <li onclick="loadSection('about')"><i class="fas fa-info-circle"></i> About Shop</li>
+                    <li onclick="logout()" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Log Out</li>
+                </ul>
+            </nav>
+
+            <main id="main-content"></main>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
