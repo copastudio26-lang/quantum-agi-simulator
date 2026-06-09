@@ -130,5 +130,8 @@ def index():
     return render_template_string(HTML_TEMPLATE, result=False)
 
 if __name__ == '__main__':
-    # 5000 की जगह 8080 पोर्ट कर दें
-    app.run(host='0.0.0.0', port=8080, debug=False)
+    import os
+    # Render पर्यावरण से पोर्ट उठाएगा, नहीं तो डिफ़ॉल्ट 5000 रखेगा
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
+
