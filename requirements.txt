@@ -1,8 +1,9 @@
 Flask
 Flask-Limiter
 Flask-Talisman
-google-genai
+google-generativeai
 numpy
 matplotlib
 requests
+gunicorn
 
