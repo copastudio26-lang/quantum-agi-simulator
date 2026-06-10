@@ -108,7 +108,9 @@ def process_dynamic_quantum(data_string, num_qubits, noise_level):
     
     plt.figure(figsize=(11, 3.8), facecolor='#020617')
     ax = plt.axes()
-    ax.set_facecolor('rgba(15, 23, 42, 0.9)')
+    
+    # 🌟 यहाँ हमने एरर फिक्स कर दिया (स्ट्रिंग की जगह सॉलिड हेक्स कोड डाल दिया)
+    ax.set_facecolor('#0f172a') 
     
     plt.bar(display_states, probs, color='#a855f7', alpha=0.6, edgecolor='#06b6d4', linewidth=1.5)
     plt.plot(display_states, probs, marker='o', color='#06b6d4', linewidth=1, markersize=6)
