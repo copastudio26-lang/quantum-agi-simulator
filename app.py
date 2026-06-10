@@ -371,28 +371,38 @@ def index():
     spacex_data = fetch_spacex_data()
     gold_data = fetch_gold_rate()
     
+    # 1. वेरिएबल्स को पहले ही सेफ डिफॉल्ट वैल्यू दे दी ताकि क्रैश न हो
+    highest_state = "|0000>"
+    probability = "100%"
+    ai_response = "✨ [SYSTEM INITIALIZED SECURELY]"
+    plot_url = ""
+    is_result = False
+
     if request.method == 'POST':
         user_input = request.form.get('question', '')
         selected_qubits = int(request.form.get('qubits', 16))
         selected_noise = float(request.form.get('noise', 0.12))
-        if not user_input: return abort(400)
         
-        try:
-            highest_state, probability, plot_url = process_dynamic_quantum(user_input, selected_qubits, selected_noise)
-            ai_response = generate_ai_insights(user_input, highest_state, probability, selected_qubits)
-            
+        if user_input:
+            is_result = True
             try:
-                conn = sqlite3.connect(DB_FILE)
-                cursor = conn.cursor()
-                now_str = datetime.now().strftime("%H:%M:%S")
-                cursor.execute("INSERT INTO history (timestamp, question, quantum_state, probability) VALUES (?, ?, ?, ?)",
-                               (now_str, user_input, highest_state, probability))
-                conn.commit()
-                conn.close()
-            except Exception: pass
-        except Exception: pass
+                highest_state, probability, plot_url = process_dynamic_quantum(user_input, selected_qubits, selected_noise)
+                ai_response = generate_ai_insights(user_input, highest_state, probability, selected_qubits)
+                
+                # डेटाबेस में सेव करें
+                try:
+                    conn = sqlite3.connect(DB_FILE)
+                    cursor = conn.cursor()
+                    now_str = datetime.now().strftime("%H:%M:%S")
+                    cursor.execute("INSERT INTO history (timestamp, question, quantum_state, probability) VALUES (?, ?, ?, ?)",
+                                   (now_str, user_input, highest_state, probability))
+                    conn.commit()
+                    conn.close()
+                except Exception: pass
+            except Exception as e:
+                ai_response = f"⚠️ सिस्टम एरर: {str(e)}"
 
-    # डेटाबेस से लॉग्स निकालकर HTML में पास करना ताकि फ्रंटएंड पर दिखें
+    # 2. डेटाबेस से लॉग्स निकालकर पास करें ताकि फ्रंटएंड पर दिखें
     history_logs = []
     try:
         conn = sqlite3.connect(DB_FILE)
@@ -401,6 +411,9 @@ def index():
         history_logs = cursor.fetchall()
         conn.close()
     except Exception: pass
+
+    return render_template_string(HTML_TEMPLATE, result=is_result, highest_state=highest_state, probability=probability, ai_response=ai_response, plot_url=plot_url, spacex=spacex_data, gold=gold_data, history_logs=history_logs)
+
 
     if request.method == 'POST':
         return render_template_string(HTML_TEMPLATE, result=True, highest_state=highest_state, probability=probability, ai_response=ai_response, plot_url=plot_url, spacex=spacex_data, gold=gold_data, history_logs=history_logs)
