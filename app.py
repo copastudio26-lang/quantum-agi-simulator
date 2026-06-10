@@ -6,8 +6,7 @@ from google import genai
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import io
+import matplotlib.pyplot as pltimport io
 import base64
 import os
 import sqlite3
@@ -87,30 +86,57 @@ def fetch_gold_rate():
         return fallback
 
 def process_dynamic_quantum(data_string, num_qubits, noise_level):
-    total_states = 1 << num_qubits
+    # 1. 4 Qubits के लिए स्टेट वेक्टर तैयार किया (कुल 16 संभावित स्टेट्स)
+    # शुरुआत में सारी Qubits |0000> स्टेट में हैं
+    state_vector = np.zeros(16, dtype=complex)
+    state_vector[0] = 1.0  # |0000> की एम्पलीट्यूड 1 है
+    
+    # 2. बुनियादी क्वांटम गेट्स की मैट्रिक्स परिभाषा
+    # Hadamard Gate (H) Matrix
+    H = (1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]], dtype=complex)
+    I = np.eye(2, dtype=complex) # Identity Matrix
+    
+    # 3. डेटा स्ट्रिंग (जो यूजर ने इनपुट दिया) के आधार पर गेट्स अप्लाई करना
     data_hash = sum(ord(c) for c in data_string)
-    np.random.seed(data_hash % 10000)
     
-    num_display_states = min(16, total_states)
-    sampled_indices = np.random.choice(total_states, size=num_display_states, replace=False)
-    sampled_indices.sort()
+    # पहली Qubit पर Hadamard Gate लगाया (सुपरपोजिशन के लिए)
+    # क्रोनेकर प्रोडक्ट (Kronecker Product) से 16x16 की ऑपरेटर मैट्रिक्स बनाई
+    gate_operator = np.kron(H, np.kron(I, np.kron(I, I)))
+    state_vector = np.dot(gate_operator, state_vector)
     
-    amplitudes = np.random.rand(num_display_states) + 1j * np.random.rand(num_display_states)
-    hardware_noise = (np.random.rand(num_display_states) * noise_level)
-    amplitudes = amplitudes + hardware_noise
-    amplitudes /= np.linalg.norm(amplitudes)
-    probs = np.abs(amplitudes) ** 2
+    # यदि डेटा हैश सम (Even) है, तो एक CNOT Gate भी लागू करें (एंटैंगलमेंट के लिए)
+    if data_hash % 2 == 0:
+        # 16x16 CNOT मैट्रिक्स (Qubit 0 और Qubit 1 के बीच)
+        CNOT_16 = np.eye(16, dtype=complex)
+        for i in range(8, 12):
+            CNOT_16[i, i] = 0
+            CNOT_16[i, i+4] = 1
+        for i in range(12, 16):
+            CNOT_16[i, i] = 0
+            CNOT_16[i, i-4] = 1
+        state_vector = np.dot(CNOT_16, state_vector)
+        
+    # 4. नॉइज़ (Decoherence) जोड़ना
+    noise = (np.random.randn(16) + 1j * np.random.randn(16)) * noise_level
+    state_vector = state_vector + noise
     
-    display_states = [f"|{bin(idx)[2:].zfill(num_qubits)}>" for idx in sampled_indices]
+    # वेवफंक्शन को नॉर्मलाइज़ करना (ताकि कुल प्रोबेबिलिटी हमेशा 100% रहे)
+    state_vector /= np.linalg.norm(state_vector)
+    
+    # Born's Rule: एम्पलीट्यूड का स्क्वायर करके असली प्रोबेबिलिटी निकालना
+    probs = np.abs(state_vector) ** 2
+    
+    # 5. फ्रंटएंड पर दिखाने के लिए बाइनरी स्टेट्स तैयार करना (|0000> से |1111>)
+    display_states = [f"|{bin(i)[2:].zfill(4)}>" for i in range(16)]
+    
     highest_idx = np.argmax(probs)
     highest_prob_state = display_states[highest_idx]
     highest_prob_val = probs[highest_idx]
     
+    # 6. ग्राफ तैयार करना
     plt.figure(figsize=(11, 3.8), facecolor='#020617')
     ax = plt.axes()
-    
-    # 🌟 यहाँ हमने एरर फिक्स कर दिया (स्ट्रिंग की जगह सॉलिड हेक्स कोड डाल दिया)
-    ax.set_facecolor('#0f172a') 
+    ax.set_facecolor('#0f172a')
     
     plt.bar(display_states, probs, color='#a855f7', alpha=0.6, edgecolor='#06b6d4', linewidth=1.5)
     plt.plot(display_states, probs, marker='o', color='#06b6d4', linewidth=1, markersize=6)
@@ -127,6 +153,44 @@ def process_dynamic_quantum(data_string, num_qubits, noise_level):
     plt.close()
     
     return highest_prob_state, f"{highest_prob_val*100:.2f}%", plot_url
+
+
+
+from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+
+def run_real_physics_quantum():
+    try:
+        # 1. 2 Qubits का असली क्वांटम सर्किट बनाया
+        circuit = QuantumCircuit(2)
+        
+        # 2. Hadamard Gate लगाया (Real Physics Superposition: 0 और 1 दोनों एक साथ)
+        circuit.h(0)
+        
+        # 3. CNOT Gate लगाया (Quantum Entanglement: दोनों qubits आपस में जुड़ गए)
+        circuit.cx(0, 1)
+        
+        # 4. Measurement (Wavefunction को जबरन एक स्टेट पर Collapse करना)
+        circuit.measure_all()
+        
+        # 5. AerSimulator का उपयोग करके असली क्वांटम फ़िज़िक्स के नियमों पर इसे रन किया
+        simulator = AerSimulator()
+        result = simulator.run(circuit, shots=1024).result()
+        counts = result.get_counts()
+        
+        # सबसे ज़्यादा बार आने वाली स्टेट को ढूँढा
+        highest_state_vector = max(counts, key=counts.get)
+        total_shots = sum(counts.values())
+        prob_percentage = f"{(counts[highest_state_vector] / total_shots) * 100:.2f}%"
+        
+        # फ्रंटएंड के लिए फॉर्मेट किया (उदा: |00>)
+        formatted_state = f"|{highest_state_vector}>"
+        ai_physics_note = "✨ [REAL QUANTUM CIRCUIT NODE ACTIVE]\n\nHadamard और CNOT गेट्स सफलतापूर्वक लागू हो गए हैं। सर्किट ने सुपरपोजिशन और एंटैंगलमेंट की असली क्वांटम फिजिक्स का उपयोग करके परिणाम निकाला है।"
+        
+        return formatted_state, prob_percentage, ai_physics_note
+    except Exception as e:
+        return "|00>", "50.00%", f"Physics Core Matrix Error: {str(e)}"
+
 
 def generate_ai_insights(user_complex_question, quantum_state_summary, probability, qubits):
     fallback_response = f"✨ [QUANTUM CORE SIMULATION ACTIVE]\n\nप्रोसेसिंग पूरी हो चुकी है। {qubits}-क्यूबिट एरे से डेटा वेक्टर {quantum_state_summary} पर {probability} की सटीकता के साथ कोलैप्स हुआ है।"
@@ -373,7 +437,6 @@ def index():
     spacex_data = fetch_spacex_data()
     gold_data = fetch_gold_rate()
     
-    # 1. वेरिएबल्स को पहले ही सेफ डिफॉल्ट वैल्यू दे दी ताकि क्रैश न हो
     highest_state = "|0000>"
     probability = "100%"
     ai_response = "✨ [SYSTEM INITIALIZED SECURELY]"
@@ -387,24 +450,31 @@ def index():
         
         if user_input:
             is_result = True
-            try:
-                highest_state, probability, plot_url = process_dynamic_quantum(user_input, selected_qubits, selected_noise)
-                ai_response = generate_ai_insights(user_input, highest_state, probability, selected_qubits)
-                
-                # डेटाबेस में सेव करें
+            
+            # 🧠 SMART TRIGGER: अगर इनपुट में 'physics' या 'real' है तो असली गेट्स चलेंगे!
+            if "physics" in user_input.lower() or "real" in user_input.lower():
+                highest_state, probability, ai_response = run_real_physics_quantum()
+                # इसमें ग्राफ की ज़रूरत नहीं, सीधे लाइव सर्किट रिस्पॉन्स दिखेगा
+                plot_url = "" 
+            else:
+                # पुराना स्मूथ साइबर विजुअल इंजन
                 try:
-                    conn = sqlite3.connect(DB_FILE)
-                    cursor = conn.cursor()
-                    now_str = datetime.now().strftime("%H:%M:%S")
-                    cursor.execute("INSERT INTO history (timestamp, question, quantum_state, probability) VALUES (?, ?, ?, ?)",
-                                   (now_str, user_input, highest_state, probability))
-                    conn.commit()
-                    conn.close()
-                except Exception: pass
-            except Exception as e:
-                ai_response = f"⚠️ सिस्टम एरर: {str(e)}"
+                    highest_state, probability, plot_url = process_dynamic_quantum(user_input, selected_qubits, selected_noise)
+                    ai_response = generate_ai_insights(user_input, highest_state, probability, selected_qubits)
+                except Exception as e:
+                    ai_response = f"⚠️ सिस्टम एरer: {str(e)}"
+            
+            # डेटाबेस लॉगिंग (यह दोनों मोड्स के लिए काम करेगा!)
+            try:
+                conn = sqlite3.connect(DB_FILE)
+                cursor = conn.cursor()
+                now_str = datetime.now().strftime("%H:%M:%S")
+                cursor.execute("INSERT INTO history (timestamp, question, quantum_state, probability) VALUES (?, ?, ?, ?)",
+                               (now_str, user_input, highest_state, probability))
+                conn.commit()
+                conn.close()
+            except Exception: pass
 
-    # 2. डेटाबेस से लॉग्स निकालकर पास करें ताकि फ्रंटएंड पर दिखें
     history_logs = []
     try:
         conn = sqlite3.connect(DB_FILE)
@@ -414,12 +484,10 @@ def index():
         conn.close()
     except Exception: pass
 
-    return render_template_string(HTML_TEMPLATE, result=is_result, highest_state=highest_state, probability=probability, ai_response=ai_response, plot_url=plot_url, spacex=spacex_data, gold=gold_data, history_logs=history_logs)
+    return render_template_string(<input type="range" name="qubits" min="4" max="4" step="4" value="4" class="slider" id="qubitSlider" oninput="document.getElementById('qubitVal').innerText=this.value">
+ , result=is_result, highest_state=highest_state, probability=probability, ai_response=ai_response, plot_url=plot_url, spacex=spacex_data, gold=gold_data, history_logs=history_logs)
 
 
-    if request.method == 'POST':
-        return render_template_string(HTML_TEMPLATE, result=True, highest_state=highest_state, probability=probability, ai_response=ai_response, plot_url=plot_url, spacex=spacex_data, gold=gold_data, history_logs=history_logs)
-    return render_template_string(HTML_TEMPLATE, result=False, spacex=spacex_data, gold=gold_data, history_logs=history_logs)
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
